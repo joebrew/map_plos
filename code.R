@@ -63,13 +63,13 @@ corrections$bairros[corrections$mulheres == 'TANCREDO NEVES '] <-
 corrections$bairros[corrections$mulheres == 'ZUMBI'] <-
   'ZUMBI DOS PALMARES'
 corrections$bairros[corrections$mulheres == 'CAMPOS SALES'] <-
-  NA
+  'SANTA ETELVINA'
 corrections$bairros[corrections$mulheres == 'CIDADE DE DEUS'] <-
-  NA
+  'CIDADE NOVA'
 corrections$bairros[corrections$mulheres == 'LAGO AZUL'] <-
-  NA
+  'TARUMÃ'
 corrections$bairros[corrections$mulheres == 'PARQUE DAS LARANJEIRAS'] <-
-  NA
+  'FLORES'
 
 # Implement the corrections
 names(corrections) <- c('NOME', 'new_name')
@@ -92,8 +92,11 @@ colors <- colorRampPalette(cols)(max(bairros_e_zonas@data$MULHERES, na.rm = TRUE
 colors <- adjustcolor(colors, alpha.f = 0.6)
 
 # Plot
+pdf('figure_1.pdf')
 plot(bairros_e_zonas,
-     col = colors[bairros_e_zonas@data$MULHERES],
+     col = ifelse(bairros_e_zonas@data$MULHERES == 0, 
+                  'white',
+                  colors[bairros_e_zonas@data$MULHERES]),  
      border = adjustcolor('black', alpha.f = 0.7))
 
 legend('bottomright',
@@ -104,7 +107,8 @@ legend('bottomright',
        col = colors,
        legend = 1:length(colors),
        title = 'Women')
-
+title(main = 'Figure 1')
+dev.off()
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ##### Figure 2 - bairros
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,13 +125,15 @@ amazonas@data$color <- adjustcolor(
                 ifelse(amazonas@data$mulheres == 2, 'darkblue', 'black'))),
   alpha.f = 0.6)
 
+pdf('figure_2.pdf')
 plot(amazonas,
      col = amazonas@data$color,
      border = adjustcolor('black', alpha.f = 0.6))
 
-legend('bottom',
+legend('bottomright',
        fill = adjustcolor(c('white', 'lightblue', 'darkblue'), alpha.f = 0.6),
        legend = c(0, 1, 2),
-       title = 'Women',
-       ncol = 3)
-title(main = 'Figure 2 (Amazonas)')
+       # ncol = 3,
+       title = 'Women')
+title(main = 'Figure 2')
+dev.off()
