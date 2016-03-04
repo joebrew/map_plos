@@ -91,12 +91,15 @@ cols <- rev(brewer.pal(n = 9, name = 'Spectral'))
 colors <- colorRampPalette(cols)(max(bairros_e_zonas@data$MULHERES, na.rm = TRUE))
 colors <- adjustcolor(colors, alpha.f = 0.6)
 
+bairros_e_zonas@data$color <- 'white'
+bairros_e_zonas@data$color[bairros_e_zonas@data$MULHERES > 0] <-
+  colors[bairros_e_zonas@data$MULHERES[bairros_e_zonas@data$MULHERES > 0]]
+  
+
 # Plot
-pdf('figure_1.pdf')
+pdf('figure_1.pdf', width = 8, height = 5)
 plot(bairros_e_zonas,
-     col = ifelse(bairros_e_zonas@data$MULHERES == 0, 
-                  'white',
-                  colors[bairros_e_zonas@data$MULHERES]),  
+     col = bairros_e_zonas@data$color,  
      border = adjustcolor('black', alpha.f = 0.7))
 
 legend('bottomright',
