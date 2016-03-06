@@ -237,3 +237,4 @@ legend('bottomright',
        title = 'Women')
 title(main = 'Figure 2')
 dev.off()
+
