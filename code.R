@@ -4,6 +4,8 @@ library(raster)
 library(readxl)
 library(RColorBrewer)
 require(maptools)
+library(ggrepel) # for avoiding overlapping labels in ggplot2
+library(ggthemes)
 
 
 ##### Read in shapefiles
@@ -46,30 +48,33 @@ corrections$bairros <- ifelse(corrections$mulheres %in% goods,
                               NA)
 
 # Make corrections
-corrections$bairros[corrections$mulheres == 'COLONIA ANTONIO ALEIXO'] <-
-  'ALEIXO'
+
 corrections$bairros[corrections$mulheres == 'COLÔNIA TERRA NOVA'] <- 
   'COL TERRA NOVA'
 corrections$bairros[corrections$mulheres == 'LIRIO DO VALE'] <-
   'LÍRIO DO VALE'
 corrections$bairros[corrections$mulheres == 'NOSSA SENHORA DAS GRAÇAS'] <-
   'N SRA DAS GRAÇAS'
-corrections$bairros[corrections$mulheres == 'NOVO ALEIXO'] <-
-  'ALEIXO'
 corrections$bairros[corrections$mulheres == 'PARQUE 10 DE NOVEMBRO'] <-
   'PARQUE DEZ DE NOVEMBRO'
 corrections$bairros[corrections$mulheres == 'TANCREDO NEVES '] <-
   'TANCREDO NEVES'
 corrections$bairros[corrections$mulheres == 'ZUMBI'] <-
   'ZUMBI DOS PALMARES'
-corrections$bairros[corrections$mulheres == 'CAMPOS SALES'] <-
-  'SANTA ETELVINA'
-corrections$bairros[corrections$mulheres == 'CIDADE DE DEUS'] <-
-  'CIDADE NOVA'
-corrections$bairros[corrections$mulheres == 'LAGO AZUL'] <-
-  'TARUMÃ'
-corrections$bairros[corrections$mulheres == 'PARQUE DAS LARANJEIRAS'] <-
-  'FLORES'
+
+# THE FOLLOWING WE ARE JUST TAKING OUT
+# corrections$bairros[corrections$mulheres == 'NOVO ALEIXO'] <-
+#   'ALEIXO'
+# corrections$bairros[corrections$mulheres == 'COLONIA ANTONIO ALEIXO'] <-
+#   'ALEIXO'
+# corrections$bairros[corrections$mulheres == 'CAMPOS SALES'] <-
+#   'SANTA ETELVINA'
+# corrections$bairros[corrections$mulheres == 'CIDADE DE DEUS'] <-
+#   'CIDADE NOVA'
+# corrections$bairros[corrections$mulheres == 'LAGO AZUL'] <-
+#   'TARUMÃ'
+# corrections$bairros[corrections$mulheres == 'PARQUE DAS LARANJEIRAS'] <-
+#   'FLORES'
 
 # Implement the corrections
 names(corrections) <- c('NOME', 'new_name')
@@ -86,25 +91,102 @@ bairros_e_zonas@data <-
 bairros_e_zonas@data$MULHERES[is.na(bairros_e_zonas@data$MULHERES)] <- 0
 
 # Define a color vector
-cols <- rev(brewer.pal(n = 9, name = 'Spectral'))
-# cols <- brewer.pal(n = 9, name = 'Greens')
+# cols <- rev(brewer.pal(n = 9, name = 'Spectral'))
+cols <- brewer.pal(n = 9, name = 'Greens')
 colors <- colorRampPalette(cols)(max(bairros_e_zonas@data$MULHERES, na.rm = TRUE))
 colors <- adjustcolor(colors, alpha.f = 0.6)
 
 bairros_e_zonas@data$color <- 'white'
-bairros_e_zonas@data$color[bairros_e_zonas@data$MULHERES > 0] <-
-  colors[bairros_e_zonas@data$MULHERES[bairros_e_zonas@data$MULHERES > 0]]
-  
+# bairros_e_zonas@data$color[bairros_e_zonas@data$MULHERES > 0] <-
+#   colors[bairros_e_zonas@data$MULHERES[bairros_e_zonas@data$MULHERES > 0]]
+#   
+# bairros_e_zonas@data$color <- ifelse(
+#   bairros_e_zonas@data$MULHERES == 0,
+#   'white',
+#   ifelse(bairros_e_zonas@data$MULHERES > 0,
+#          colors[bairros_e_zonas@data$MULHERES],
+#          'orange'))
+
+for (i in 1:nrow(bairros_e_zonas@data)){
+  if(bairros_e_zonas@data$MULHERES[i] > 0){
+    bairros_e_zonas@data$color[i] <-
+      # colors[bairros_e_zonas@data$MULHERES[i]]
+      colors[bairros_e_zonas@data$MULHERES[i]]
+  }
+}
+
+# # PLOT GG STYLE
+# 
+# # # fortify map
+# bairros_e_zonas@data$place_id <- row.names(bairros_e_zonas@data)
+# row.names(bairros_e_zonas@data) <- NULL
+# bairros_e_zonas_f <- fortify(bairros_e_zonas, region = 'place_id')
+# # bring in number of women
+# 
+# bairros_e_zonas_f <- left_join(bairros_e_zonas_f,
+#                                bairros_e_zonas@data %>%
+#                                  mutate(OBJECTID = as.character(OBJECTID)),
+#                                by = c('id' = 'OBJECTID'))
+# 
+# Create a labeling dataframe
+label_df <- bairros_e_zonas@data[,c('NOME', 'MULHERES')]
+label_df <- label_df[!duplicated(label_df$NOME),]
+# add lat long
+label_df$long <- coordinates(bairros_e_zonas)[,1]
+label_df$lat <- coordinates(bairros_e_zonas)[,2]
+# Keep only those with > 0 women
+label_df <- label_df[label_df$MULHERES > 0,]
+# Replace spaces with line breaks
+label_df$NOME <- gsub(' ', '\n', label_df$NOME)
+# 
+# 
+# ggplot() +
+#   coord_map() +
+#   geom_polygon(data = bairros_e_zonas_f,
+#                aes(x = long, y =lat, group = group,
+#                    fill = MULHERES), color = 'grey') +
+#   geom_label_repel(data = label_df, 
+#                    aes(long, lat, 
+#                        #fill = factor(NOME),
+#                        label = factor(NOME)),
+#                    fontface = 'bold',
+#                    color = 'black',
+#                    size = 1.5, 
+#                    box.padding = unit(1.75, 'lines')) +
+#   theme_tufte() +
+#   theme(axis.ticks.length = unit(0.001, "mm")) + labs(x=NULL, y=NULL) +
+#   theme(axis.line=element_blank(),
+#         axis.text.x=element_blank(),
+#         axis.text.y=element_blank(),
+#         axis.ticks=element_blank(),
+#         axis.title.x=element_blank(),
+#         axis.title.y=element_blank(),
+#         legend.position="none",
+#         panel.background=element_blank(),
+#         panel.border=element_blank(),
+#         panel.grid.major=element_blank(),
+#         panel.grid.minor=element_blank(),
+#         plot.background=element_blank()) +
+#   scale_fill_manual(guide = guide_legend(title = 'Area'),
+#                     values = cols)
+
+
 
 # Plot
-pdf('figure_1.pdf', width = 8, height = 5)
+pdf('figure_1.pdf', width = 10, height = 8)
 plot(bairros_e_zonas,
      col = bairros_e_zonas@data$color,  
-     border = adjustcolor('black', alpha.f = 0.7))
-
-legend('bottomright',
+     border = adjustcolor('black', alpha.f = 0.3)
+     # border = NA
+     )
+text(x = label_df$long,
+     y = label_df$lat,
+     label = label_df$NOME,
+     cex = 0.3,
+     col = adjustcolor('black', alpha.f = 0.6))
+legend('right',
        fill = colors,
-       ncol = 2,
+       ncol = 1,
        cex = 0.8,
        border = NA,
        col = colors,
@@ -128,15 +210,30 @@ amazonas@data$color <- adjustcolor(
                 ifelse(amazonas@data$mulheres == 2, 'darkblue', 'black'))),
   alpha.f = 0.6)
 
-pdf('figure_2.pdf')
+# Make a labeling vector
+label_df <- amazonas@data
+label_df$long <- coordinates(amazonas)[,1]
+label_df$lat <- coordinates(amazonas)[,2]
+
+label_df <- label_df[label_df$mulheres > 0,]
+label_df$NAME_2 <- gsub(' ', '\n', label_df$NAME_2)
+
+
+pdf('figure_2.pdf', width = 10, height = 8)
 plot(amazonas,
      col = amazonas@data$color,
-     border = adjustcolor('black', alpha.f = 0.6))
+     border = adjustcolor('black', alpha.f = 0.3))
+text(x = label_df$long,
+     y = label_df$lat,
+     label = label_df$NAME_2,
+     cex = 0.4,
+     col = adjustcolor('black', alpha.f = 0.6))
 
 legend('bottomright',
        fill = adjustcolor(c('white', 'lightblue', 'darkblue'), alpha.f = 0.6),
        legend = c(0, 1, 2),
-       # ncol = 3,
+       cex = 0.8,
+       border = NA,
        title = 'Women')
 title(main = 'Figure 2')
 dev.off()
