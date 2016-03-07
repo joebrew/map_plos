@@ -192,7 +192,6 @@ legend('right',
        col = colors,
        legend = 1:length(colors),
        title = 'Women')
-title(main = 'Figure 1')
 dev.off()
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ##### Figure 2 - bairros
@@ -235,6 +234,5 @@ legend('bottomright',
        cex = 0.8,
        border = NA,
        title = 'Women')
-title(main = 'Figure 2')
 dev.off()
 
