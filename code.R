@@ -171,14 +171,39 @@ label_df$NOME <- gsub(' ', '\n', label_df$NOME)
 #                     values = cols)
 
 
+# Add dataframe for accessory labeling
+acc <- bairros_e_zonas@data
+acc$lng <- coordinates(bairros_e_zonas)[,1]
+acc$lat <- coordinates(bairros_e_zonas)[,2]
+
+# Keep only those areas that have hospitals
+acc <- acc[acc$NOME %in% c('JORGE TEIXEIRA', 'DOM PEDRO'),]
+acc$label <- c('Jap Clinic', 'FMT HVD')
+
+# Give them special colors / symbols
+acc$color <- adjustcolor(c('blue', 'red'), alpha.f = 0.6)
+acc$pch <- c(15, 17)
+
+
+# acc <- 
+#   data.frame(label = c('Jap Clinic', 'FMT-HVD'),
+#              lng = as.numeric(coordinates(bairros_e_zonas[bairros_e_zonas@data$NOME == 'JORGE TEIXEIRA',])[,1]),
+#              lat = as.numeric(coordinates(bairros_e_zonas[bairros_e_zonas@data$NOME == 'JORGE TEIXEIRA',])[,2]))
 
 # Plot
 pdf('figure_1.pdf', width = 10, height = 8)
+
 plot(bairros_e_zonas,
      col = bairros_e_zonas@data$color,  
      border = adjustcolor('black', alpha.f = 0.3)
      # border = NA
      )
+points(acc$lng, acc$lat,
+       pch = acc$pch,
+       col = acc$color,
+       cex = 2)
+
+
 text(x = label_df$long,
      y = label_df$lat,
      label = label_df$NOME,
@@ -192,6 +217,24 @@ legend('right',
        col = colors,
        legend = 1:length(colors),
        title = 'Women')
+
+# text(x = acc$lng,
+#      y = acc$lat,
+#      label = gsub(' ', '\n', acc$label),
+#      cex = 0.6)
+legend('topright',
+       pch = acc$pch,
+       col = acc$color,
+       legend = acc$label)
+# Add compass rose
+compassRose(x = -60.1, y = -3.12)
+
+
+# Add scale
+maps::map.scale(x =-59.91, y  = -3.15, relwidth = 0.2, 
+                metric = TRUE, ratio = TRUE,
+                col = adjustcolor('black', alpha.f = 0.6),
+                cex = 0.6)
 dev.off()
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ##### Figure 2 - bairros
@@ -219,6 +262,7 @@ label_df$NAME_2 <- gsub(' ', '\n', label_df$NAME_2)
 
 
 pdf('figure_2.pdf', width = 10, height = 8)
+
 plot(amazonas,
      col = amazonas@data$color,
      border = adjustcolor('black', alpha.f = 0.3))
@@ -234,5 +278,13 @@ legend('bottomright',
        cex = 0.8,
        border = NA,
        title = 'Women')
+# Add compass rose
+compassRose(x = -72, y = -1.4)
+# Add scale
+maps::map.scale(x =-64, y  = -9.5, relwidth = 0.2, 
+                metric = TRUE, ratio = TRUE,
+                col = adjustcolor('black', alpha.f = 0.6),
+                cex = 0.6)
+
 dev.off()
 
